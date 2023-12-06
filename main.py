@@ -13,27 +13,46 @@ from pybricks.media.ev3dev import SoundFile, ImageFile
 # Create your objects here.
 ev3 = EV3Brick()
 
-motorD = Motor.Port(A)
-motorE = Motor.Port(B)
-senseD = ColorSensor.Port(S1)
-senseE = ColorSensor.Port(S2)
+right_motor = motor(Port.A)
+left_motor = motor(Port.D)
+CSenRight = ColorSensor(Port.S1)
+CSenLeft = ColorSensor(Port.S2)
 
-kp = 1
-dd = 0
+MOV = DriveBase(left_motor, right_motor, wheel_diameter=40, axle_track=135)
 
 # Write your program here.
-ev3.speaker.beep()
+
+Kp = 1.5  # const P
+Ki = 0.1  # const I
+Kd = 0.1  # const D
+speed = 250 # Velocidade em mm/s
+
+P_des = 0
+
+I = 0
+P_ant = 0
+
+def PID(dif):
+    
+    I = I + P
+    D = P - P_ant
+
+    saida = Kp * P + Ki * I + Kd * D
+
+    MOV.drive(speed, saida)
+
+    P_ant = P
 
 while True:
-    Cright = senseD.reflection()
-    Cleft = senseE.reflection()
-    
-    dr = Cright - Cleft
-    error = kp * (dd - dr)
-    
-    Mleft = 50 + error
-    Mright = 50 - error
-    
-    motorD.run(Mright)
-    motorE.run(Mleft)
+    RcorLeft = CSenRight.reflection()
+    RcorRight = CSenRight.reflection()
 
+    P = RcorLeft - RcorRight
+    if CSenRight.rgb() == (0, 100, 0) and CSenLeft.rgb() == (0, 100, 0):
+        PID(P)
+    elif CSenLeft.rgb() == (0, 100, 0):
+        VirarLeft()
+    elif CSenRight.rgb() == (0, 100, 0):
+        VirarRight()
+    else:
+        PID(P)
