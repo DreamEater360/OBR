@@ -13,27 +13,22 @@ from pybricks.media.ev3dev import SoundFile, ImageFile
 # Create your objects here.
 ev3 = EV3Brick()
 
-right_motor = motor(Port.A)
-left_motor = motor(Port.D)
-CSenRight = ColorSensor(Port.S1)
+right_motor = Motor(Port.A)
+left_motor = Motor(Port.D)
+CSenRight = ColorSensor(Port.S3)
 CSenLeft = ColorSensor(Port.S2)
 
 MOV = DriveBase(left_motor, right_motor, wheel_diameter=40, axle_track=135)
 
-# Write your program here.
-
-Kp = 1.5  # const P
+Kp = 3.5  # const P
 Ki = 0.1  # const I
 Kd = 0.1  # const D
-speed = 250 # Velocidade em mm/s
-
-P_des = 0
+speed = 70 # Velocidade em mm/s
 
 I = 0
 P_ant = 0
 
-def PID(dif):
-    
+def PID(I, Kp, Ki, Kd, speed, MOV, P_ant):
     I = I + P
     D = P - P_ant
 
@@ -43,16 +38,29 @@ def PID(dif):
 
     P_ant = P
 
+def VirarRight(MOV, PID):
+    MOV.stop()
+    MOV.turn(90)
+    MOV.straight(50)
+
+def VirarLeft(MOV):
+    MOV.stop()
+    MOV.turn(-90)
+    MOV.straight(50)
+
 while True:
     RcorLeft = CSenRight.reflection()
     RcorRight = CSenRight.reflection()
 
     P = RcorLeft - RcorRight
-    if CSenRight.rgb() == (0, 100, 0) and CSenLeft.rgb() == (0, 100, 0):
-        PID(P)
-    elif CSenLeft.rgb() == (0, 100, 0):
-        VirarLeft()
-    elif CSenRight.rgb() == (0, 100, 0):
-        VirarRight()
+
+    if CSenRight.color() == color.GREEN and CSenLeft.color() == color.GREEN:
+        PID(I, Kp, Ki, Kd, speed, MOV, P_ant)
+    elif CSenLeft.color() == color.GREEN:
+        VirarLeft(MOV)
+        PID(I, Kp, Ki, Kd, speed, MOV, P_ant)
+    elif CSenRight.color() == color.GREEN:
+        VirarRight(MOV)
+        PID(I, Kp, Ki, Kd, speed, MOV, P_ant)
     else:
-        PID(P)
+        PID(I, Kp, Ki, Kd, speed, MOV, P_ant)
